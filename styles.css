@@ -1,6 +1,6 @@
 body {
-    font-family: Arial, sans-serif;
-    background-color: #f4f4f9;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #e9ecef;
     margin: 0;
     padding: 0;
     display: flex;
@@ -11,34 +11,41 @@ body {
 
 .container {
     background: white;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     width: 100%;
-    max-width: 400px;
+    max-width: 500px;
 }
 
 h1 {
     text-align: center;
-    margin-bottom: 20px;
+    margin-bottom: 30px;
+    color: #343a40;
 }
 
 .form-group {
-    margin-bottom: 15px;
+    margin-bottom: 20px;
 }
 
 label {
     display: block;
-    margin-bottom: 5px;
-    font-weight: bold;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: #495057;
 }
 
-input[type="text"], input[type="password"], input[type="time"], select, input[type="email"] {
+input[type="text"],
+input[type="password"],
+input[type="time"],
+select,
+input[type="email"] {
     width: 100%;
-    padding: 8px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    box-sizing: border-box; /* Garante que o padding não aumente a largura */
+    padding: 12px;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    box-sizing: border-box;
+    font-size: 16px;
 }
 
 .fa-question-circle {
@@ -49,13 +56,19 @@ input[type="text"], input[type="password"], input[type="time"], select, input[ty
 
 .btn {
     width: 100%;
-    padding: 10px;
+    padding: 14px;
     background-color: #007bff;
     color: white;
     border: none;
-    border-radius: 4px;
+    border-radius: 6px;
     cursor: pointer;
-    margin-top: 10px; /* Adiciona espaço acima do botão */
+    margin-top: 20px;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+}
+
+.btn:hover {
+    background-color: #0056b3;
 }
 
 .btn-cancel {
@@ -72,109 +85,144 @@ input[type="text"], input[type="password"], input[type="time"], select, input[ty
     background-color: rgba(0, 0, 0, 0.5);
     justify-content: center;
     align-items: center;
+    z-index: 1000;
 }
 
 .modal-content {
     background: white;
-    padding: 20px;
-    border-radius: 8px;
+    padding: 30px;
+    border-radius: 12px;
     text-align: center;
     width: 90%;
-    max-width: 400px;
+    max-width: 500px;
 }
 
 .error-message {
-    color: red;
+    color: #dc3545;
     text-align: center;
-    margin-top: 10px;
+    margin-top: 15px;
 }
 
-/* Ajustes para alinhamento dos campos */
-.form-group input, .form-group select {
-    margin-top: 5px;
-}body {
-    font-family: Arial, sans-serif;
-    background-color: #f4f4f9;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
+.password-container {
+    position: relative;
 }
 
-.container {
-    background: white;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    width: 100%;
-    max-width: 400px;
+.toggle-password {
+    position: absolute;
+    top: 50%;
+    right: 10px;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #868e96;
 }
 
-h1 {
+.logo-container {
     text-align: center;
     margin-bottom: 20px;
 }
 
-.form-group {
-    margin-bottom: 15px;
+.logo-container img {
+    max-width: 150px;
+    height: auto;
 }
 
-label {
-    display: block;
-    margin-bottom: 5px;
+.footer {
+    text-align: center;
+    margin-top: 30px;
+    padding: 20px;
+    background-color: #f8f9fa;
+    border-top: 1px solid #dee2e6;
+    color: #6c757d;
+    font-size: 14px;
+}
+
+.whatsapp-button {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background-color: #25D366;
+    color: white;
+    display: flex;
+    align-items: center;
+    width: auto;
+    height: 60px;
+    padding: 0 15px;
+    border-radius: 30px;
+    font-size: 16px;
+    text-decoration: none;
+    box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+.whatsapp-button:hover {
+    transform: scale(1.1);
+    box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.4);
+    background-color: #128C7E;
+}
+
+.whatsapp-button i {
+    font-size: 30px;
+    margin-right: 10px;
+    line-height: 0;
+}
+
+.whatsapp-button .whatsapp-text {
     font-weight: bold;
 }
 
-input[type="text"], input[type="password"], input[type="time"], select, input[type="email"] {
-    width: 100%;
-    padding: 8px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-}
-
-.fa-question-circle {
-    margin-left: 5px;
-    color: #007bff;
-    cursor: help;
-}
-
-.btn {
-    width: 100%;
-    padding: 10px;
-    background-color: #007bff;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-}
-
-.btn-cancel {
-    background-color: #6c757d;
-}
-
-.modal {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    justify-content: center;
+.whatsapp-button div {
+    display: flex;
     align-items: center;
 }
 
-.modal-content {
-    background: white;
-    padding: 20px;
-    border-radius: 8px;
-    text-align: center;
-}
-
-.error-message {
-    color: red;
+.recover-password {
     text-align: center;
     margin-top: 10px;
+}
+
+.recover-password a {
+    color: #007bff;
+    text-decoration: none;
+}
+
+.recover-password a:hover {
+    text-decoration: underline;
+}
+
+/* Estilos para a seção de status do ESP32 */
+.status-section {
+    margin-top: 20px;
+    padding: 15px;
+    border: 1px solid #eee;
+    border-radius: 4px;
+    background-color: #f9f9f9;
+    text-align: left;
+}
+
+.status-section h2 {
+    font-size: 1.2em;
+    margin-bottom: 10px;
+}
+
+.status-section p {
+    margin: 5px 0;
+}
+
+/* Estilos para o LED de status */
+.status-led {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 5px;
+}
+
+.status-led.online {
+    background-color: #28a745; /* Verde */
+}
+
+.status-led.offline {
+    background-color: #dc3545; /* Vermelho */
 }
