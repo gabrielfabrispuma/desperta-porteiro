@@ -238,3 +238,26 @@ input[type="email"] {
     background-color: #dc3545;
     /* Vermelho */
 }
+
+/* Estilos para o header da tela principal */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+/* Estilos para o botão de configurações do usuário */
+.user-settings-btn {
+    background-color: transparent;
+    border: none;
+    color: #007bff;
+    font-size: 20px;
+    cursor: pointer;
+    transition: color 0.3s ease;
+    padding: 0;
+}
+
+.user-settings-btn:hover {
+    color: #0056b3;
+}

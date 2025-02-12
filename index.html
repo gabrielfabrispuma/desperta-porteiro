@@ -6,7 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Desperta Porteiro</title>
     <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 
 <body>
@@ -24,7 +25,8 @@
             <div class="form-group">
                 <label for="password">Senha</label>
                 <div class="password-container">
-                    <input type="password" id="password" name="password" required autocomplete="current-password">
+                    <input type="password" id="password" name="password" required
+                        autocomplete="current-password">
                     <i class="fas fa-eye toggle-password" id="togglePassword"></i>
                 </div>
             </div>
@@ -38,7 +40,10 @@
 
     <!-- Página Principal (inicialmente oculta) -->
     <div id="mainScreen" class="container" style="display: none;">
-        <h1>Configuração do Desperta Porteiro</h1>
+        <div class="header">
+            <h1>Configuração do Desperta Porteiro</h1>
+
+        </div>
         <form id="configForm">
             <div class="form-group">
                 <label for="startTime">Hora de Início <i class="fas fa-question-circle"
@@ -73,8 +78,11 @@
         <button id="openStatusModal" class="btn">Ver Status do Dispositivo</button>
 
         <!-- Botão para abrir o modal de configurações de e-mail -->
-        <button id="openEmailConfigModal" class="btn">Configurações de E-mail</button>
+        <button id="openEmailConfigModal" class="btn">Configurações de E-mail SMTP</button>
 
+        <button id="openUserSettingsModal" class="btn user-settings-btn">
+            <i class="fas fa-user-cog"></i>
+        </button>
         <!-- Rodapé -->
         <footer class="footer">
             <p>Desperta Porteiro – Tecnologia e segurança ao seu alcance. © <span id="currentYear"></span> Todos os
@@ -115,7 +123,9 @@
     <!-- Modal de Configurações de E-mail -->
     <div id="emailConfigModal" class="modal">
         <div class="modal-content">
-            <h2>Configurações de E-mail</h2>
+            <h2>Configurações de E-mail SMTP</h2>
+            <p><i class="fas fa-exclamation-circle"></i> Estas configurações são necessárias para que o Desperta
+                Porteiro consiga enviar um e-mail caso o porteiro cometa uma falta.</p>
             <form id="emailConfigForm">
                 <div class="form-group">
                     <label for="smtpHost">Host SMTP</label>
@@ -135,6 +145,29 @@
                 </div>
                 <button type="submit" class="btn btn-success">Salvar</button>
                 <button id="closeEmailConfigModal" class="btn btn-cancel">Fechar</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal de Configurações do Usuário -->
+    <div id="userSettingsModal" class="modal">
+        <div class="modal-content">
+            <h2>Configurações do Usuário</h2>
+            <form id="userSettingsForm">
+                <div class="form-group">
+                    <label for="newUsername">Usuário</label>
+                    <input type="text" id="newUsername" name="newUsername">
+                </div>
+                <div class="form-group">
+                    <label for="newEmail">E-mail</label>
+                    <input type="email" id="newEmail" name="newEmail">
+                </div>
+                <div class="form-group">
+                    <label for="newPassword">Alterar Senha</label>
+                    <input type="password" id="newPassword" name="newPassword">
+                </div>
+                <button type="submit" class="btn btn-success">Salvar Alterações</button>
+                <button id="closeUserSettingsModal" class="btn btn-cancel">Fechar</button>
             </form>
         </div>
     </div>
