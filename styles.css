@@ -71,8 +71,18 @@ input[type="email"] {
     background-color: #0056b3;
 }
 
+.btn-success {
+    background-color: #28a745;
+    color: white;
+}
+
+.btn-success:hover {
+    background-color: #218838;
+}
+
 .btn-cancel {
     background-color: #6c757d;
+    color: white;
 }
 
 .modal {
@@ -220,9 +230,11 @@ input[type="email"] {
 }
 
 .status-led.online {
-    background-color: #28a745; /* Verde */
+    background-color: #28a745;
+    /* Verde */
 }
 
 .status-led.offline {
-    background-color: #dc3545; /* Vermelho */
+    background-color: #dc3545;
+    /* Vermelho */
 }

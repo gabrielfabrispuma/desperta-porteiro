@@ -66,11 +66,14 @@
                         title="Define o e-mail para qual será disparado um email de notificação para avisar que o porteiro cometeu uma falta."></i></label>
                 <input type="email" id="email" name="email" required>
             </div>
-            <button type="submit" class="btn">Salvar</button>
+            <button type="submit" class="btn btn-success">Salvar</button>
         </form>
 
         <!-- Botão para abrir o modal de status -->
         <button id="openStatusModal" class="btn">Ver Status do Dispositivo</button>
+
+        <!-- Botão para abrir o modal de configurações de e-mail -->
+        <button id="openEmailConfigModal" class="btn">Configurações de E-mail</button>
 
         <!-- Rodapé -->
         <footer class="footer">
@@ -92,7 +95,7 @@
                 </p>
                 <p><strong>Endereço IP:</strong> <span id="modalIpAddress"></span></p>
                 <p><strong>Última atualização:</strong> <span id="modalLastUpdate"></span></p>
-				<p><strong>Funcionamento:</strong> <span id="operatingStatus"></span></p>
+                <p><strong>Funcionamento:</strong> <span id="operatingStatus"></span></p>
             </div>
             <button id="refreshStatus" class="btn">Atualizar Status</button>
             <button id="closeStatusModal" class="btn btn-cancel">Fechar</button>
@@ -104,8 +107,35 @@
         <div class="modal-content">
             <h2>Confirmar Alterações</h2>
             <div id="modalContent"></div>
-            <button id="confirmBtn" class="btn">Confirmar</button>
+            <button id="confirmBtn" class="btn btn-success">Confirmar</button>
             <button id="cancelBtn" class="btn btn-cancel">Cancelar</button>
+        </div>
+    </div>
+
+    <!-- Modal de Configurações de E-mail -->
+    <div id="emailConfigModal" class="modal">
+        <div class="modal-content">
+            <h2>Configurações de E-mail</h2>
+            <form id="emailConfigForm">
+                <div class="form-group">
+                    <label for="smtpHost">Host SMTP</label>
+                    <input type="text" id="smtpHost" name="smtpHost" required>
+                </div>
+                <div class="form-group">
+                    <label for="smtpPort">Porta SMTP</label>
+                    <input type="text" id="smtpPort" name="smtpPort" required>
+                </div>
+                <div class="form-group">
+                    <label for="authorEmail">E-mail Remetente</label>
+                    <input type="email" id="authorEmail" name="authorEmail" required>
+                </div>
+                <div class="form-group">
+                    <label for="authorPassword">Senha do Remetente</label>
+                    <input type="password" id="authorPassword" name="authorPassword" required>
+                </div>
+                <button type="submit" class="btn btn-success">Salvar</button>
+                <button id="closeEmailConfigModal" class="btn btn-cancel">Fechar</button>
+            </form>
         </div>
     </div>
 
