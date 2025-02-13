@@ -1,423 +1,465 @@
 document.addEventListener('DOMContentLoaded', function () {
-    const loginForm = document.getElementById('loginForm');
+    // Elementos da tela de login
     const loginScreen = document.getElementById('loginScreen');
     const mainScreen = document.getElementById('mainScreen');
+    const loginForm = document.getElementById('loginForm');
     const loginError = document.getElementById('loginError');
     const togglePassword = document.getElementById('togglePassword');
     const passwordInput = document.getElementById('password');
-    const currentYear = document.getElementById('currentYear');
-    const recoverPasswordLink = document.getElementById('recoverPasswordLink');
-    const openStatusModalBtn = document.getElementById('openStatusModal');
+
+    // Modais
     const statusModal = document.getElementById('statusModal');
-    const closeStatusModalBtn = document.getElementById('closeStatusModal');
-    const openEmailConfigModalBtn = document.getElementById('openEmailConfigModal');
+    const openStatusModal = document.getElementById('openStatusModal');
+    const closeStatusModal = document.getElementById('closeStatusModal');
+
     const emailConfigModal = document.getElementById('emailConfigModal');
-    const closeEmailConfigModalBtn = document.getElementById('closeEmailConfigModal');
+    const openEmailConfigModal = document.getElementById('openEmailConfigModal');
+    const closeEmailConfigModal = document.getElementById('closeEmailConfigModal');
     const emailConfigForm = document.getElementById('emailConfigForm');
-    const smtpHostInput = document.getElementById('smtpHost');
-    const smtpPortInput = document.getElementById('smtpPort');
-    const authorEmailInput = document.getElementById('authorEmail');
-    const authorPasswordInput = document.getElementById('authorPassword');
-    const refreshStatusBtn = document.getElementById('refreshStatus');
-    const statusLed = document.getElementById('statusLed');
-    const modalStatus = document.getElementById('modalStatus');
-    const openUserSettingsModalBtn = document.getElementById('openUserSettingsModal');
+    const confirmationModal = document.getElementById('confirmationModal');
+
+    // Modais de configurações do usuário
     const userSettingsModal = document.getElementById('userSettingsModal');
-    const closeUserSettingsModalBtn = document.getElementById('closeUserSettingsModal');
+    const openUserSettingsModal = document.getElementById('openUserSettingsModal');
+    const closeUserSettingsModal = document.getElementById('closeUserSettingsModal');
     const userSettingsForm = document.getElementById('userSettingsForm');
-    const newUsernameInput = document.getElementById('newUsername');
-    const newEmailInput = document.getElementById('newEmail');
-    const newPasswordInput = document.getElementById('newPassword');
 
-    // Função para exibir mensagens de erro
-    function displayError(message) {
-        alert(message); // Usando alert para exibir a mensagem de erro
-    }
+    // Campos de configuração
+    const startTimeInput = document.getElementById('startTime');
+    const endTimeInput = document.getElementById('endTime');
+    const intervalSelect = document.getElementById('interval');
+    const emailInput = document.getElementById('email');
 
-    // Função para validar se um valor é um número inteiro positivo
-    function isValidPositiveInteger(value) {
-        return /^\d+$/.test(value) && Number(value) > 0;
-    }
+    // URL do backend
+    const backendURL = 'processar_login.php';
 
-    // Função para formatar a data e hora
-    function formatDateTime(date) {
-        let year = date.getFullYear();
-        let month = String(date.getMonth() + 1).padStart(2, '0'); // Adiciona um zero à esquerda se for necessário
-        let day = String(date.getDate()).padStart(2, '0'); // Adiciona um zero à esquerda se for necessário
-        let hours = String(date.getHours()).padStart(2, '0'); // Adiciona um zero à esquerda se for necessário
-        let minutes = String(date.getMinutes()).padStart(2, '0'); // Adiciona um zero à esquerda se for necessário
-        let seconds = String(date.getSeconds()).padStart(2, '0'); // Adiciona um zero à esquerda se for necessário
+    let originalEmailConfig = {};
+    let originalUserSettings = {};
 
-        return `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
-    }
-
-    // Mascara para deixar somente numeros
-    function onlyNumbers(event) {
-        let charCode = (event.which) ? event.which : event.keyCode
-        if (charCode > 31 && (charCode < 48 || charCode > 57)) {
-            event.preventDefault();
-        }
-        return true;
-    }
-
-    // Atualiza o ano atual no rodapé
-    currentYear.textContent = new Date().getFullYear();
-
-    // Alternar a visibilidade da senha
-    togglePassword.addEventListener('click', function (e) {
+    // Helpers Functions
+    const togglePasswordVisibility = () => {
         const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
         passwordInput.setAttribute('type', type);
-        this.classList.toggle('fa-eye-slash');
-    });
+        togglePassword.classList.toggle('fa-eye-slash');
+    };
 
-    // Função para mostrar a tela principal e esconder a tela de login
-    function showMainScreen() {
+    const displayLoginError = (message) => {
+        loginError.textContent = message;
+        loginError.style.display = 'block';
+    };
+
+    const hideLoginError = () => {
+        loginError.style.display = 'none';
+    };
+
+    const showMainScreen = () => {
         loginScreen.style.display = 'none';
         mainScreen.style.display = 'block';
+    };
+
+    const clearEmailConfigForm = () => {
+        document.getElementById('smtpHost').value = '';
+        document.getElementById('smtpPort').value = '';
+        document.getElementById('authorEmail').value = '';
+        document.getElementById('authorPassword').value = '';
+    };
+
+    const clearUserSettingsForm = () => {
+        document.getElementById('newUsername').value = '';
+        document.getElementById('newEmail').value = '';
+        document.getElementById('newPassword').value = '•••••';
     }
 
-    // Função para mostrar a tela de login e esconder a tela principal
-    function showLoginScreen() {
-        mainScreen.style.display = 'none';
-        loginScreen.style.display = 'block';
+    // Funções para Status (ESP32)
+    function updateStatus(isOnline) {
+        const statusLed = document.getElementById('statusLed');
+        const modalStatus = document.getElementById('modalStatus');
+        statusLed.classList.remove('online', 'offline');
+        statusLed.classList.add(isOnline ? 'online' : 'offline');
+        modalStatus.textContent = isOnline ? 'Online' : 'Offline';
     }
 
-    // Função para abrir um modal
-    function openModal(modal) {
-        modal.style.display = 'flex';
+    function checkOperatingHours(startHour, startMinute, endHour, endMinute) {
+        const now = new Date();
+        const currentHours = now.getHours();
+        const currentMinutes = now.getMinutes();
+
+        const startTime = new Date();
+        startTime.setHours(startHour, startMinute, 0, 0);
+
+        const endTime = new Date();
+        endTime.setHours(endHour, endMinute, 0, 0);
+
+        if (startTime < endTime) {
+            return currentHours >= startHour && currentMinutes >= startMinute && currentHours <= endHour && currentMinutes <= endMinute;
+        } else {
+            return (currentHours >= startHour && currentMinutes >= startMinute) || (currentHours <= endHour && currentMinutes <= endMinute);
+        }
     }
 
-    // Função para fechar um modal
-    function closeModal(modal) {
-        modal.style.display = 'none';
+    function loadAPIData(isRefresh = false) {
+        fetch('https://api-desperta.onrender.com/config')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('modalDeviceId').textContent = "Desperta_Porteiro_01";
+
+                if (data.esp32Status.timestamp) {
+                    const apiTimestamp = parseInt(data.esp32Status.timestamp) * 1000;
+                    const currentTimestamp = Date.now();
+                    const adjustedCurrentTimestamp = currentTimestamp - 10800000;
+                    const difference = adjustedCurrentTimestamp - apiTimestamp;
+
+                    const apiDate = new Date(apiTimestamp);
+                    const adjustedCurrentDate = new Date(adjustedCurrentTimestamp);
+
+                    if (difference > 10000) {
+                        updateStatus(false);
+                        document.getElementById('modalIpAddress').textContent = "0.0.0.0";
+                        document.getElementById('operatingStatus').textContent = "N/A";
+                    } else {
+                        updateStatus(true);
+                        document.getElementById('modalIpAddress').textContent = data.esp32Status.ipAddress;
+                        const isOperating = checkOperatingHours(data.startHour, data.startMinute, data.endHour, data.endMinute);
+                        document.getElementById('operatingStatus').textContent = isOperating ? "Em horário de funcionamento" : "Fora do horário de funcionamento";
+                    }
+
+                    document.getElementById('modalLastUpdate').textContent = apiDate.toLocaleString('pt-BR', {
+                        timeZone: 'UTC',
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit'
+                    });
+                } else {
+                    updateStatus(false);
+                    document.getElementById('modalLastUpdate').textContent = "N/A";
+                    document.getElementById('modalIpAddress').textContent = "0.0.0.0";
+                    document.getElementById('operatingStatus').textContent = "N/A";
+                }
+
+                if (isRefresh) {
+                    alert('Status atualizado com sucesso!');
+                }
+
+            })
+            .catch(error => {
+                console.error('Erro ao carregar dados da API:', error);
+                if (isRefresh) {
+                    alert('Erro ao atualizar o status. Verifique a conexão com a API.');
+                }
+            });
     }
 
-    // Evento de envio do formulário de login
+    function setEmailConfigForm(data) {
+        document.getElementById('smtpHost').value = data.smtp_host;
+        document.getElementById('smtpPort').value = data.smtp_port;
+        document.getElementById('authorEmail').value = data.author_email;
+        document.getElementById('authorPassword').value = data.author_password; // Preenche a senha
+    }
+
+    function setUserSettingsForm(data){
+        document.getElementById('newUsername').value = data.username;
+        document.getElementById('newEmail').value = data.email;
+    }
+
+    // Event Listeners
+    togglePassword.addEventListener('click', togglePasswordVisibility);
+
     loginForm.addEventListener('submit', function (event) {
         event.preventDefault();
+        hideLoginError();
 
         const username = document.getElementById('username').value;
         const password = document.getElementById('password').value;
 
-        fetch('processar_login.php', {
+        const formData = new URLSearchParams();
+        formData.append('action', 'login');
+        formData.append('username', username);
+        formData.append('password', password);
+
+        fetch(backendURL, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
+                'Content-Type': 'application/x-www-form-urlencoded'
             },
-            body: `action=login&username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`
+            body: formData
         })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                return response.json();
-            })
+            .then(response => response.json())
             .then(data => {
                 if (data.success) {
                     showMainScreen();
-                    // Carrega as configurações SMTP e API após o login bem-sucedido
-                    loadSmtpConfig();
-                    loadApiData();
+                    loadConfigData();
+
+                    if (data.config_smtp) {
+                        document.getElementById('smtpHost').value = data.config_smtp.smtp_host;
+                        document.getElementById('smtpPort').value = data.config_smtp.smtp_port;
+                        document.getElementById('authorEmail').value = data.config_smtp.author_email;
+                        document.getElementById('authorPassword').value = '•••••';
+                    }
                 } else {
-                    loginError.textContent = data.message;
-                    loginError.style.display = 'block';
+                    displayLoginError(data.message);
                 }
             })
             .catch(error => {
                 console.error('Erro na requisição:', error);
-                loginError.textContent = 'Erro ao comunicar com o servidor.';
-                loginError.style.display = 'block';
+                displayLoginError('Erro ao comunicar com o servidor.');
             });
     });
 
-    // Recuperar Senha
+    // Abre o modal de configurações de e-mail
+    openEmailConfigModal.addEventListener('click', function () {
+        fetch(backendURL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: `action=carregar_config_smtp`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                setEmailConfigForm(data.config_smtp);
+                originalEmailConfig = {...data.config_smtp};
+            } else {
+                alert('Erro ao carregar configurações de e-mail: ' + data.message);
+            }
+            emailConfigModal.style.display = 'flex';
+            document.getElementById('authorPassword').value = '•••••';
+
+        })
+        .catch(error => {
+            console.error('Erro na requisição:', error);
+            alert('Erro ao comunicar com o servidor.');
+        });
+
+    });
+
+    // Fecha o modal de configurações de e-mail
+    closeEmailConfigModal.addEventListener('click', function () {
+        setEmailConfigForm(originalEmailConfig); // Restaura os valores originais
+        emailConfigModal.style.display = 'none';
+        document.getElementById('authorPassword').value = '•••••'; // Mantém a exibição da senha mascarada
+    });
+
+    // Abre o modal de configurações do usuário
+    openUserSettingsModal.addEventListener('click', function () {
+
+        fetch(backendURL, {
+             method: 'POST',
+             headers: {
+                 'Content-Type': 'application/x-www-form-urlencoded'
+             },
+             body: `action=carregar_config_usuario`
+         })
+        .then(response => response.json())
+        .then(data => {
+             if (data.success) {
+                 setUserSettingsForm(data.config_usuario);
+                 originalUserSettings = {...data.config_usuario};
+             } else {
+                 alert('Erro ao carregar configurações de usuário: ' + data.message);
+             }
+             userSettingsModal.style.display = 'flex';
+             document.getElementById('newPassword').value = '•••••';
+        })
+        .catch(error => {
+             console.error('Erro na requisição:', error);
+             alert('Erro ao comunicar com o servidor.');
+        });
+
+    });
+
+     // Fecha o modal de configurações do usuário
+     closeUserSettingsModal.addEventListener('click', function () {
+        setUserSettingsForm(originalUserSettings); // Restaura os valores originais
+        userSettingsModal.style.display = 'none';
+        document.getElementById('newPassword').value = '•••••'; // Mantém a exibição da senha mascarada
+    });
+    
+    // Adiciona o ano atual no rodapé
+    document.getElementById('currentYear').textContent = new Date().getFullYear();
+
+    // Recuperar Senha (Simulação)
+    const recoverPasswordLink = document.getElementById('recoverPasswordLink');
+
     recoverPasswordLink.addEventListener('click', function (event) {
         event.preventDefault();
-        alert('Para recuperar a senha, entre em contato com o administrador do sistema.');
+        // Simulação de envio de e-mail (exibir mensagem)
+        alert('Para recuperar sua senha, entre em contato com o suporte através do e-mail ti@fabrispuma.com.br.');
     });
 
-    // MODAL DE STATUS
-    openStatusModalBtn.addEventListener('click', function () {
-        openModal(statusModal);
-        updateStatus();
-    });
+    // Funções de configuração
+    function loadConfigData() {
+        fetch('https://api-desperta.onrender.com/config')
+            .then(response => response.json())
+            .then(data => {
+                startTimeInput.value = `${String(data.startHour).padStart(2, '0')}:${String(data.startMinute).padStart(2, '0')}`;
+                endTimeInput.value = `${String(data.endHour).padStart(2, '0')}:${String(data.endMinute).padStart(2, '0')}`;
+                intervalSelect.value = data.interval;
+                emailInput.value = data.email1;
+            })
+            .catch(error => {
+                console.error('Erro ao carregar dados de configuração:', error);
+                alert('Erro ao carregar dados de configuração. Verifique a conexão com a API.');
+            });
+    }
 
-    closeStatusModalBtn.addEventListener('click', function () {
-        closeModal(statusModal);
-    });
-
-    // Evento para fechar o modal ao clicar fora dele
-    window.addEventListener('click', function (event) {
-        if (event.target == statusModal) {
-            closeModal(statusModal);
+    // Abre o modal de status
+    openStatusModal.addEventListener('click', function () {
+        loadAPIData(); // Carrega os dados antes de abrir
+        statusModal.style.display = 'flex';
+        // Inicia a atualização automática do status a cada 30 segundos
+        if (statusUpdateInterval) {
+            clearInterval(statusUpdateInterval); // Limpa o intervalo anterior, se existir
         }
-        if (event.target == emailConfigModal) {
-            closeModal(emailConfigModal);
-        }
-        if (event.target == userSettingsModal) {
-            closeModal(userSettingsModal);
-        }
+        statusUpdateInterval = setInterval(loadAPIData, 30000); // 30 segundos
     });
 
-    // MODAL DE CONFIGURAÇÕES DE E-MAIL
-    openEmailConfigModalBtn.addEventListener('click', function () {
-        openModal(emailConfigModal);
+    // Fecha o modal de status
+    closeStatusModal.addEventListener('click', function () {
+        statusModal.style.display = 'none';
+        clearInterval(statusUpdateInterval); // Limpa o intervalo quando o modal é fechado
     });
 
-    closeEmailConfigModalBtn.addEventListener('click', function () {
-        closeModal(emailConfigModal);
+    // Atualiza o status (recarrega os dados)
+    document.getElementById('refreshStatus').addEventListener('click', function () {
+        loadAPIData(true); // Indica que a função foi chamada por um refresh
     });
 
-    // Salvar configurações de e-mail SMTP
-    emailConfigForm.addEventListener('submit', function (event) {
+    // Envia o formulário de configuração
+    document.getElementById('configForm').addEventListener('submit', function (event) {
         event.preventDefault();
 
-        const smtpHost = smtpHostInput.value;
-        const smtpPort = smtpPortInput.value;
-        const authorEmail = authorEmailInput.value;
-        const authorPassword = authorPasswordInput.value;
+        const startTime = document.getElementById('startTime').value;
+        const endTime = document.getElementById('endTime').value;
+        const interval = document.getElementById('interval').value;
+        const email = document.getElementById('email').value;
 
-        // Validações
-        if (!smtpHost) {
-            displayError('Por favor, preencha o campo Host SMTP.');
-            return;
-        }
+        const [startHour, startMinute] = startTime.split(':');
+        const [endHour, endMinute] = endTime.split(':');
 
-        if (!smtpPort) {
-            displayError('Por favor, preencha o campo Porta SMTP.');
-            return;
-        }
+        const config = {
+            startHour: parseInt(startHour),
+            startMinute: parseInt(startMinute),
+            endHour: parseInt(endHour),
+            endMinute: parseInt(endMinute),
+            interval: parseInt(interval),
+            email1: email
+        };
 
-        if (!isValidPositiveInteger(smtpPort)) {
-            displayError('A Porta SMTP deve ser um número inteiro positivo.');
-            return;
-        }
+        // Exibe os dados formatados no modal de confirmação
+        document.getElementById('modalContent').innerHTML = `
+            <p><strong>Horário de Início:</strong> ${startTime}</p>
+            <p><strong>Horário de Fim:</strong> ${endTime}</p>
+            <p><strong>Intervalo entre Marcações:</strong> ${interval} minutos</p>
+            <p><strong>E-mail:</strong> ${email}</p>
+        `;
+        confirmationModal.style.display = 'flex';
 
-        if (!authorEmail) {
-            displayError('Por favor, preencha o campo E-mail Remetente.');
-            return;
-        }
-
-        if (!authorPassword) {
-            displayError('Por favor, preencha o campo Senha do Remetente.');
-            return;
-        }
-
-        fetch('processar_login.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: `action=salvar_config_smtp&smtp_host=${encodeURIComponent(smtpHost)}&smtp_port=${encodeURIComponent(smtpPort)}&author_email=${encodeURIComponent(authorEmail)}&author_password=${encodeURIComponent(authorPassword)}`
-        })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                return response.json();
+        // Confirma e envia os dados para a API
+        document.getElementById('confirmBtn').onclick = function () {
+            fetch('https://api-desperta.onrender.com/config', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(config)
             })
-            .then(data => {
-                if (data.success) {
-                    alert(data.message);
-                    closeModal(emailConfigModal);
-                } else {
-                    displayError(data.message);
-                }
-            })
-            .catch(error => {
-                console.error('Erro na requisição:', error);
-                displayError('Erro ao comunicar com o servidor.');
-            });
+                .then(response => response.json())
+                .then(data => {
+                    alert('Configurações salvas com sucesso!');
+                    confirmationModal.style.display = 'none';
+                })
+                .catch(error => {
+                    console.error('Erro ao salvar configurações:', error);
+                });
+        };
+
+        // Cancela e fecha o modal de confirmação
+        document.getElementById('cancelBtn').onclick = function () {
+            confirmationModal.style.display = 'none';
+        };
     });
 
-    // Carregar configurações SMTP ao abrir o modal
-    function loadSmtpConfig() {
-        fetch('processar_login.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: 'action=carregar_config_smtp'
-        })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (data.success && data.config_smtp) {
-                    smtpHostInput.value = data.config_smtp.smtp_host;
-                    smtpPortInput.value = data.config_smtp.smtp_port;
-                    authorEmailInput.value = data.config_smtp.author_email;
-                    authorPasswordInput.value = ""; // Não exibir a senha por segurança
-                } else {
-                    displayError(data.message || 'Erro ao carregar as configurações SMTP.');
-                }
-            })
-            .catch(error => {
-                console.error('Erro na requisição:', error);
-                displayError('Erro ao comunicar com o servidor.');
-            });
-    }
-
-    // MODAL DE CONFIGURAÇÕES DO USUÁRIO
-    openUserSettingsModalBtn.addEventListener('click', function () {
-        openModal(userSettingsModal);
-        loadUserSettings();
-    });
-
-    closeUserSettingsModalBtn.addEventListener('click', function () {
-        closeModal(userSettingsModal);
-    });
-
-    // Carregar configurações do usuário
-    function loadUserSettings() {
-        fetch('processar_login.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: 'action=carregar_config_usuario'
-        })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (data.success && data.config_usuario) {
-                    newUsernameInput.value = data.config_usuario.username;
-                    newEmailInput.value = data.config_usuario.email;
-                    newPasswordInput.value = ""; // Limpar o campo de senha por segurança
-                } else {
-                    displayError(data.message || 'Erro ao carregar as configurações do usuário.');
-                }
-            })
-            .catch(error => {
-                console.error('Erro na requisição:', error);
-                displayError('Erro ao comunicar com o servidor.');
-            });
-    }
-
-    // Salvar configurações do usuário
+    // Lidar com o envio do formulário de configurações do usuário
     userSettingsForm.addEventListener('submit', function (event) {
         event.preventDefault();
 
-        const newUsername = newUsernameInput.value;
-        const newEmail = newEmailInput.value;
-        const newPassword = newPasswordInput.value;
+        const newUsername = document.getElementById('newUsername').value;
+        const newEmail = document.getElementById('newEmail').value;
+        const newPassword = document.getElementById('newPassword').value === '•••••' ? '' : document.getElementById('newPassword').value;
 
-        fetch('processar_login.php', {
+        const formData = new URLSearchParams();
+        formData.append('action', 'salvar_config_usuario');
+        formData.append('new_username', newUsername);
+        formData.append('new_email', newEmail);
+        formData.append('new_password', newPassword);
+
+        fetch(backendURL, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
+                'Content-Type': 'application/x-www-form-urlencoded'
             },
-            body: `action=salvar_config_usuario&new_username=${encodeURIComponent(newUsername)}&new_email=${encodeURIComponent(newEmail)}&new_password=${encodeURIComponent(newPassword)}`
+            body: formData
         })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                return response.json();
-            })
+            .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    alert(data.message);
-                    closeModal(userSettingsModal);
+                    alert('Configurações de usuário salvas com sucesso!');
+                    userSettingsModal.style.display = 'none';
+                    clearUserSettingsForm();
                 } else {
-                    displayError(data.message);
+                    alert('Erro ao salvar configurações de usuário: ' + data.message);
                 }
             })
             .catch(error => {
                 console.error('Erro na requisição:', error);
-                displayError('Erro ao comunicar com o servidor.');
+                alert('Erro ao comunicar com o servidor.');
             });
     });
 
-    // API
-    function loadApiData() {
-        fetch('processar_login.php', {
+    emailConfigForm.addEventListener('submit', function (event) {
+        event.preventDefault();
+
+        const smtpHost = document.getElementById('smtpHost').value;
+        const smtpPort = document.getElementById('smtpPort').value;
+        const authorEmail = document.getElementById('authorEmail').value;
+        const authorPassword = document.getElementById('authorPassword').value;
+
+        const formData = new URLSearchParams();
+        formData.append('action', 'salvar_config_smtp');
+        formData.append('smtp_host', smtpHost);
+        formData.append('smtp_port', smtpPort);
+        formData.append('author_email', authorEmail);
+        formData.append('author_password', authorPassword);
+
+        fetch(backendURL, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
+                'Content-Type': 'application/x-www-form-urlencoded'
             },
-            body: 'action=login' // Enviando uma ação genérica para acionar a rota de login no PHP
+            body: formData
         })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                return response.json();
-            })
+            .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // Verifica se a resposta contém dados da API
-                    if (data.config_api) {
-                        // Manipula os dados da API conforme necessário
-                        console.log('Dados da API:', data.config_api);
-                        // Exemplo: Preencher campos de formulário com os dados da API
-                        // document.getElementById('startTime').value = data.config_api.start_time;
-                        // document.getElementById('endTime').value = data.config_api.end_time;
-                        // document.getElementById('interval').value = data.config_api.interval;
-                        // document.getElementById('email').value = data.config_api.email;
-                    } else {
-                        console.log('Nenhum dado da API retornado.');
-                    }
+                    alert('Configurações de e-mail salvas com sucesso!');
+                    emailConfigModal.style.display = 'none';
+                    originalEmailConfig = {
+                        smtp_host: smtpHost,
+                        smtp_port: smtpPort,
+                        author_email: authorEmail,
+                        author_password: authorPassword
+                    };
                 } else {
-                    console.log('Falha ao obter dados da API:', data.message);
+                    alert('Erro ao salvar configurações de e-mail: ' + data.message);
                 }
             })
             .catch(error => {
-                console.error('Erro ao obter dados da API:', error);
+                console.error('Erro na requisição:', error);
+                alert('Erro ao comunicar com o servidor.');
             });
-    }
-
-    // Status
-    function updateStatus() {
-        fetch('https://api-desperta.onrender.com/status')
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`Erro HTTP: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                // Verificar se a API retornou um status 200
-                if (data.status === 200) {
-                    // Atualizar o LED de status e a mensagem de status
-                    statusLed.classList.remove('offline');
-                    statusLed.classList.add('online');
-                    modalStatus.textContent = 'Online';
-
-                    // Atualizar os outros campos com os dados retornados
-                    document.getElementById('modalDeviceId').textContent = data.device_id;
-                    document.getElementById('modalIpAddress').textContent = data.ip_address;
-
-                    // Formatar a data e hora da última atualização
-                    let lastUpdate = new Date(data.last_update);
-                    document.getElementById('modalLastUpdate').textContent = formatDateTime(lastUpdate);
-
-                    // Lógica para o status de funcionamento
-                    let operating = data.operating ? 'Em funcionamento' : 'Parado';
-                    document.getElementById('operatingStatus').textContent = operating;
-                } else {
-                    // Se o status não for 200, atualizar o LED para offline e exibir a mensagem de erro da API
-                    statusLed.classList.remove('online');
-                    statusLed.classList.add('offline');
-                    modalStatus.textContent = 'Offline';
-                    document.getElementById('operatingStatus').textContent = 'Erro ao obter status.';
-                }
-            })
-            .catch(error => {
-                console.error('Erro ao buscar o status:', error);
-                statusLed.classList.remove('online');
-                statusLed.classList.add('offline');
-                modalStatus.textContent = 'Offline';
-                document.getElementById('operatingStatus').textContent = 'Erro ao obter status.';
-            });
-    }
-
-    refreshStatusBtn.addEventListener('click', updateStatus);
+    });
 });

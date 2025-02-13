@@ -58,25 +58,12 @@ function obter_configuracoes_smtp_globais() {
 // Função para salvar as configurações SMTP globais
 function salvar_configuracoes_smtp_globais($smtp_host, $smtp_port, $author_email, $author_password = null) {
     $conn = connect_db();
-    $query = "UPDATE desperta_porteiro_smtp SET smtp_host = ?, smtp_port = ?, author_email = ? WHERE id = 1";
-
-    // Se a senha for fornecida, atualiza também
-    if ($author_password !== null && $author_password !== '') {
-        $hashedPassword = password_hash($author_password, PASSWORD_DEFAULT);
-        $query = "UPDATE desperta_porteiro_smtp SET smtp_host = ?, smtp_port = ?, author_email = ?, author_password = ? WHERE id = 1";
-        $stmt = $conn->prepare($query);
-
-        if ($stmt) {
-            $stmt->bind_param("ssss", $smtp_host, $smtp_port, $author_email, $hashedPassword);
-        }
-    } else {
-        $stmt = $conn->prepare($query);
-        if ($stmt) {
-            $stmt->bind_param("sss", $smtp_host, $smtp_port, $author_email);
-        }
-    }
+    $query = "UPDATE desperta_porteiro_smtp SET smtp_host = ?, smtp_port = ?, author_email = ?, author_password = ? WHERE id = 1";
+    $stmt = $conn->prepare($query);
 
     if ($stmt) {
+        $stmt->bind_param("ssss", $smtp_host, $smtp_port, $author_email, $author_password);
+
         if ($stmt->execute()) {
             $stmt->close();
             $conn->close();
@@ -155,20 +142,20 @@ function salvar_configuracoes_usuario($usuario_id, $new_username, $new_email, $n
     if (!empty($new_username)) {
         $updates[] = "username = ?";
         $types .= 's';
-        $values[] = &$new_username;
+        $values[] = $new_username;
     }
 
     if (!empty($new_email)) {
         $updates[] = "email = ?";
         $types .= 's';
-        $values[] = &$new_email;
+        $values[] = $new_email;
     }
 
     if (!empty($new_password)) {
         $hashedPassword = password_hash($new_password, PASSWORD_DEFAULT);
         $updates[] = "password = ?";
         $types .= 's';
-        $values[] = &$hashedPassword;
+        $values[] = $hashedPassword;
     }
 
     if (empty($updates)) {
@@ -180,15 +167,20 @@ function salvar_configuracoes_usuario($usuario_id, $new_username, $new_email, $n
     $stmt = $conn->prepare($sql);
 
     if ($stmt) {
-        $types = str_repeat('s', count($values)) . 'i';
-        $values[] = &$usuario_id;
+        $types .= 'i'; // Tipo para o ID do usuário
 
-        $params = array_merge([$types], $values);
+        $bindParams = [];
+        $bindParams[0] = &$stmt;
+        $bindParams[1] = &$types;
 
-        // Use Reflection to bind parameters dynamically
-        $ref   = new ReflectionClass('mysqli_stmt');
-        $method = $ref->getMethod("bind_param");
-        $method->invokeArgs($stmt, $params);
+        for ($i = 0; $i < count($values); $i++) {
+            $bindParams[] = &$values[$i];
+            $types .= "s";
+        }
+         $bindParams[] = &$usuario_id;
+        $types .= "i";
+       
+        $stmt->bind_param($types, ...$bindParams);
 
         if ($stmt->execute()) {
             $stmt->close();
@@ -260,7 +252,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $smtp_host = $_POST["smtp_host"];
             $smtp_port = $_POST["smtp_port"];
             $author_email = $_POST["author_email"];
-            $author_password = $_POST["author_password"] !== '' ? $_POST["author_password"] : null;
+            $author_password = $_POST["author_password"];
 
             if (salvar_configuracoes_smtp_globais($smtp_host, $smtp_port, $author_email, $author_password)) {
                 echo json_encode([
@@ -352,24 +344,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 echo json_encode([
                     'success' => false,
                     'message' => 'Erro ao carregar as configurações de usuário.'
-                ]);
-            }
-        }
-
-        // Rota para obter as configurações da API
-        elseif ($action == "obter_configuracoes_api") {
-            $config_api = obter_configuracoes_api();
-
-            if ($config_api) {
-                echo json_encode([
-                    'success' => true,
-                    'message' => 'Configurações da API carregadas com sucesso!',
-                    'config_api' => $config_api
-                ]);
-            } else {
-                echo json_encode([
-                    'success' => false,
-                    'message' => 'Erro ao carregar as configurações da API.'
                 ]);
             }
         }
